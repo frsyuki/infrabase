@@ -33,37 +33,37 @@ class Server::ModRPC
 	end
 
 	def write(key, val)
-		puts "write: '#{key}' '#{val}'"
+		#puts "write: '#{key}' '#{val}'"
 		$rs.mod_chain.write(key, val)
 	end
 
 	def awrite(key, val)
-		puts "awrite: '#{key}' '#{val}'"
+		#puts "awrite: '#{key}' '#{val}'"
 		$rs.mod_chain.awrite(key, val)
 	end
 
 	def chain(key, val, ver)
-		puts "chain: '#{key}' '#{val}' #{ver}"
+		#puts "chain: '#{key}' '#{val}' #{ver}"
 		$rs.mod_chain.chain(key, val, ver)
 	end
 
 	def read(key)
-		puts "read: '#{key}'"
+		#puts "read: '#{key}'"
 		$rs.mod_chain.read(key)
 	end
 
 	def sread(key)
-		puts "sread: '#{key}'"
+		#puts "sread: '#{key}'"
 		$rs.mod_chain.sread(key)
 	end
 
 	def vquery(key)
-		puts "vquery: '#{key}'"
+		#puts "vquery: '#{key}'"
 		$rs.mod_store.vquery(key)
 	end
 
 	def clean(key, ver)
-		puts "clean: '#{key}' #{ver}"
+		#puts "clean: '#{key}' #{ver}"
 		$rs.mod_store.clean(key, ver)
 	end
 end

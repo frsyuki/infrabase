@@ -218,16 +218,18 @@ class Server::ModChain
 		if n
 			s = $rs.net.get_session(*n)
 			as = MessagePack::RPC::AsyncResult.new
-			s.callback(:chain, key, val, ver) {|err, res|
+			callback = nil
+			callback = Proc.new {|err, res|
 				if err
-					puts "chain error: #{err.inspect}"
-					as.error(err)
+					# FIXME 無限にリトライ -> 障害検出とキューが必要
+					s.callback(:chain, key, val, ver, &callback)
 				else
 					ver = res
 					$rs.mod_store.clean(key, ver)
 					as.result(ver)
 				end
 			}
+			s.callback(:chain, key, val, ver, &callback)
 			return as
 		else
 			# tail

@@ -37,6 +37,11 @@ class Server::ModRPC
 		$rs.mod_chain.write(key, val)
 	end
 
+	def awrite(key, val)
+		puts "awrite: '#{key}' '#{val}'"
+		$rs.mod_chain.awrite(key, val)
+	end
+
 	def chain(key, val, ver)
 		puts "chain: '#{key}' '#{val}' #{ver}"
 		$rs.mod_chain.chain(key, val, ver)
@@ -176,6 +181,12 @@ class Server::ModChain
 	def write(key, val)
 		ver = $rs.mod_store.write(key, val)
 		do_chain(key, val, ver)
+	end
+
+	def awrite(key, val)
+		ver = $rs.mod_store.write(key, val)
+		do_chain(key, val, ver)
+		ver
 	end
 
 	def chain(key, val, ver)

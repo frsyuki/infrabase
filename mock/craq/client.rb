@@ -23,10 +23,18 @@ class Client
 		s.call(:sread, key)
 	end
 
+	# synchronized write
 	def write(key, val)
 		addr = head_for(key)
 		s = @sp.get_session(*addr)
 		s.call(:write, key, val)
+	end
+
+	# synchronized write
+	def awrite(key, val)
+		addr = head_for(key)
+		s = @sp.get_session(*addr)
+		s.call(:awrite, key, val)
 	end
 
 	private
@@ -56,4 +64,6 @@ p c.write("key1", "val1")
 p c.read("key1")
 p c.write("key2", "val2")
 p c.sread("key2")
+p c.awrite("key3", "val3")
+p c.read("key3")
 

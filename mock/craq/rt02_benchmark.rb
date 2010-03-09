@@ -44,6 +44,7 @@ begin
 	end
 
 	time = Time.now - start
+	puts "#{time} sec."
 	puts "#{lonum / time} QPS"
 
 ensure

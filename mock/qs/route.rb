@@ -70,44 +70,44 @@ class RoutingSource
 		changed
 	end
 
-	#def set_mprep(vpoint)
-	#	changed = false
-	#	unless @mprep.index(vpoint)
-	#		@mprep.push(vpoint)
-	#		changed = true
-	#	end
-	#	changed = true if @sprep.delete(vpoint)
-	#	changed = true if @ready.delete(vpoint)
-	#	changed = true if @fault.delete(vpoint)
-	#	update_tag if changed
-	#	changed
-	#end
+	def set_mprep(vpoint)
+		changed = false
+		unless @mprep.index(vpoint)
+			@mprep.push(vpoint)
+			changed = true
+		end
+		changed = true if @sprep.delete(vpoint)
+		changed = true if @ready.delete(vpoint)
+		changed = true if @fault.delete(vpoint)
+		update_tag if changed
+		changed
+	end
 
-	#def set_ready(vpoint)
-	#	changed = false
-	#	unless @ready.index(vpoint)
-	#		@ready.push(vpoint)
-	#		changed = true
-	#	end
-	#	changed = true if @sprep.delete(vpoint)
-	#	changed = true if @mprep.delete(vpoint)
-	#	changed = true if @fault.delete(vpoint)
-	#	update_tag if changed
-	#	changed
-	#end
+	def set_ready(vpoint)
+		changed = false
+		unless @ready.index(vpoint)
+			@ready.push(vpoint)
+			changed = true
+		end
+		changed = true if @sprep.delete(vpoint)
+		changed = true if @mprep.delete(vpoint)
+		changed = true if @fault.delete(vpoint)
+		update_tag if changed
+		changed
+	end
 
-	#def set_fault(vpoint)
-	#	changed = false
-	#	unless @fault.index(vpoint)
-	#		@fault.push(vpoint)
-	#		changed = true
-	#	end
-	#	changed = true if @sprep.delete(vpoint)
-	#	changed = true if @mprep.delete(vpoint)
-	#	changed = true if @ready.delete(vpoint)
-	#	update_tag if changed
-	#	changed
-	#end
+	def set_fault(vpoint)
+		changed = false
+		unless @fault.index(vpoint)
+			@fault.push(vpoint)
+			changed = true
+		end
+		changed = true if @sprep.delete(vpoint)
+		changed = true if @mprep.delete(vpoint)
+		changed = true if @ready.delete(vpoint)
+		update_tag if changed
+		changed
+	end
 
 	def shift_mprep_addr(addr)
 		changed = false

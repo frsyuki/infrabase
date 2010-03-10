@@ -69,7 +69,7 @@ class Server::ModAlive
 		$log.TRACE "do_heartbeat"
 		$rs.qs_addrs.each {|qsaddr|
 			s = $rs.net.get_session(*qsaddr)
-			s.callback(:heartbeat, $rs.self_addr) do |err, res|
+			s.callback(:heartbeat, $rs.self_addr, $rs.mod_route.tag_of_qs(qsaddr)) do |err, res|
 				if res
 					@eater.feed(qsaddr, res)
 				end
@@ -82,7 +82,8 @@ end
 class Server::ModRoute
 	def initialize
 		@route = RoutingManager.new($rs.self_addr)
-		$rs.net.start_timer(10, true, &method(:do_get_routing_source))
+		# heartbeatでtagを送っている
+		#$rs.net.start_timer(10, true, &method(:do_get_routing_source))
 		do_get_routing_source
 	end
 
@@ -91,6 +92,10 @@ class Server::ModRoute
 			route_changed
 		end
 		nil
+	end
+
+	def tag_of_qs(qsaddr)
+		@route.tag_of_qs(qsaddr)
 	end
 
 	private
@@ -114,16 +119,6 @@ end
 
 
 class Server::ModStore
-	class Entry
-		def initialize(val, ver)
-			@val = val
-			@ver = ver
-			@clean = false
-		end
-		attr_reader :val, :ver
-		attr_accessor :clean
-	end
-
 	def initialize
 		@db = {}
 	end

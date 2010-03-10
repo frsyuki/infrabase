@@ -31,10 +31,11 @@ end
 
 
 class Server::ModRPC
-	def heartbeat(dsaddr)
+	# heartbeat rsrc_tag phase dsaddr
+	def heartbeat(dsaddr, rsrc_tag)
 		dsaddr = MessagePack::RPC::Address.load(dsaddr)
-		$log.TRACE "RPC heartbeat dsaddr=#{dsaddr}"
-		$rs.mod_alive.heartbeat(dsaddr)
+		$log.TRACE "RPC heartbeat dsaddr=#{dsaddr} rsrc_tag=#{rsrc_tag}"
+		$rs.mod_alive.heartbeat(rsrc_tag, dsaddr)
 	end
 
 	def get_routing_source(tag = nil)
@@ -60,7 +61,8 @@ class Server::ModAlive
 		$rs.net.start_timer(1, true, &method(:do_expire))
 	end
 
-	def heartbeat(dsaddr)
+	def heartbeat(rsrc_tag, dsaddr)
+		check_routing_source(dsaddr, rsrc_tag)
 		@feeder.order(dsaddr)
 	end
 
@@ -97,6 +99,13 @@ class Server::ModRoute
 		@rsrc
 	end
 
+	def check_routing_source(dsaddr, tag)
+		if tag && @rsrc.tag == tag
+			return nil
+		end
+		push_route_ds(dsaddr)
+	end
+
 	def set_phase(sprep, mprep, ready, fault, remove)
 		sprep.each {|vp| @rsrc.set_sprep(vp) }
 		mprep.each {|vp| @rsrc.set_mprep(vp) }
@@ -107,6 +116,24 @@ class Server::ModRoute
 		new_active_node = (sprep + mprep + ready).map {|vp| vp.address }.uniq
 		$rs.mod_alive.new_active_node(new_active_node)
 		nil
+	end
+
+	def mprep_detected(ds_addrs)
+		$log.DEBUG "mprep detected #{ds_addrs.join(', ')}"
+		changed = false
+		ds_addrs.each {|dsaddr|
+			changed = true if @rsrc.shift_mprep_addr(dsaddr)
+		}
+		route_updated if changed
+	end
+
+	def ready_detected(ds_addrs)
+		$log.DEBUG "ready detected #{ds_addrs.join(', ')}"
+		changed = false
+		ds_addrs.each {|dsaddr|
+			changed = true if @rsrc.shift_ready_addr(dsaddr)
+		}
+		route_updated if changed
 	end
 
 	def fault_detected(ds_addrs)
@@ -123,15 +150,19 @@ class Server::ModRoute
 		@active_nodes = (@rsrc.sprep + @rsrc.mprep + @rsrc.ready).map {|vp| vp.address }.uniq.sort
 		$log.TRACE "route updated #{@rsrc.inspect}"
 		$log.TRACE "active_nodes #{@active_nodes.join(', ')}"
-		push_route_ds
+		push_route_ds_all
 	end
 
-	def push_route_ds
+	def push_route_ds(dsaddr)
+		s = $rs.net.get_session(*dsaddr)
+		s.callback(:push_route, $rs.self_addr, @rsrc) do |err, res|
+			# FIXME ignore?
+		end
+	end
+
+	def push_route_ds_all
 		@active_nodes.each {|dsaddr|
-			s = $rs.net.get_session(*dsaddr)
-			s.callback(:push_route, $rs.self_addr, @rsrc) do |err, res|
-				# FIXME ignore?
-			end
+			push_route_ds(dsaddr)
 		}
 	end
 end

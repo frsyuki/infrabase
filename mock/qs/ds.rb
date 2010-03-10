@@ -52,7 +52,7 @@ class Server::ModRPC
 	def push_route(qsaddr, rsrc)
 		qsaddr = MessagePack::RPC::Address.load(qsaddr)
 		rsrc = RoutingSource.from_msgpack(rsrc)
-		$log.TRACE "RPC get qsaddr=#{qsaddr} rsrc=#{rsrc.inspect}"
+		$log.TRACE "RPC push_route qsaddr=#{qsaddr} rsrc=#{rsrc}"
 		$rs.mod_route.push_route(qsaddr, rsrc)
 	end
 end
@@ -83,10 +83,13 @@ class Server::ModRoute
 	def initialize
 		@route = RoutingManager.new($rs.self_addr)
 		$rs.net.start_timer(10, true, &method(:do_get_routing_source))
+		do_get_routing_source
 	end
 
 	def push_route(qsaddr, rsrc)
-		@route.update_qs(qsaddr, rsrc)
+		if @route.update_qs(qsaddr, rsrc)
+			route_changed
+		end
 		nil
 	end
 
@@ -95,12 +98,17 @@ class Server::ModRoute
 		$rs.qs_addrs.each {|qsaddr|
 			s = $rs.net.get_session(*qsaddr)
 			s.callback(:get_routing_source, @route.tag_of_qs(qsaddr)) do |err, res|
+				$log.TRACE "res RPC get_routing_source #{err.inspect} #{res.inspect}"
 				if res
 					rsrc = RoutingSource.from_msgpack(res)
-					@route.update_qs(qsaddr, rsrc)
+					push_route(qsaddr, rsrc)
 				end
 			end
 		}
+	end
+
+	def route_changed
+		# FIXME check the deference
 	end
 end
 
@@ -149,7 +157,7 @@ end
 
 
 if ARGV.size < 2
-	puts "usage: #{$0} <qs host:port> ... <self host:port>"
+	puts "usage: #{$0} <QS host:port> ... <self host:port>"
 	exit 1
 end
 

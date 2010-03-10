@@ -26,6 +26,7 @@ class Server::Resource
 	end
 	attr_reader :net
 	attr_reader :mod_route, :mod_alive, :mod_rpc
+	attr_reader :self_addr
 end
 
 
@@ -64,6 +65,7 @@ class Server::ModAlive
 	end
 
 	def new_active_node(ds_addrs)
+		$log.TRACE "new_active_node #{ds_addrs.join(', ')}"
 		ds_addrs.each {|dsaddr|
 			@feeder.reset(dsaddr)
 		}
@@ -111,17 +113,14 @@ class Server::ModRoute
 		$log.DEBUG "fault detected #{ds_addrs.join(', ')}"
 		changed = false
 		ds_addrs.each {|dsaddr|
-			if @active_nodes.include?(dsaddr)
-				changed = true
-				@rsrc.set_fault_addr(dsaddr)
-			end
+			changed = true if @rsrc.shift_fault_addr(dsaddr)
 		}
 		route_updated if changed
 	end
 
 	private
 	def route_updated
-		@active_nodes = (@rsrc.sprep + @rsrc.mprep + @rsrc.ready).map {|vp| vp.address }.uniq.sort  # FIXME sort?
+		@active_nodes = (@rsrc.sprep + @rsrc.mprep + @rsrc.ready).map {|vp| vp.address }.uniq.sort
 		$log.TRACE "route updated #{@rsrc.inspect}"
 		$log.TRACE "active_nodes #{@active_nodes.join(', ')}"
 		push_route_ds
@@ -131,6 +130,7 @@ class Server::ModRoute
 		@active_nodes.each {|dsaddr|
 			s = $rs.net.get_session(*dsaddr)
 			s.callback(:push_route, $rs.self_addr, @rsrc) do |err, res|
+				# FIXME ignore?
 			end
 		}
 	end
